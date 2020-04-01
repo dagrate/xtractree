@@ -8,10 +8,11 @@ Extract Tree from Bagging Classifiers
 
 XtracTree is a Python library that proposes to convert a bagging classifer into a set of ''if-then'' rules satisfying the requirements of model validation. XtracTree is also capable of (i) performing accurate predictions based on the extracted set of ''if-then'' rules and (ii) to highlight the decision path for each individual sample. XtracTree allows non machine learning experts to understand the decision of a machine learning bagging classifier by using only ''if-then'' rules with business taxonomy.
 
+----------------------------
 
 ## Dependencies
 
-The library uses **Python 3** and **R** with the following modules:
+The library uses **Python 3** with the following modules:
 - numpy (Python 3) == '1.18.2'
 - pandas (Python 3) == '1.0.3'
 - seaborn (Python 3) == '0.10.0'
