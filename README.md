@@ -2,8 +2,8 @@
 Extract Tree from Bagging Classifiers
 
 <p align="middle">
-  <img src="https://github.com/dagrate/xtractree/blob/master/images/persDiag_originSamples.png" width="400"/>
-  <img src="https://github.com/dagrate/xtractree/blob/master/images/persDiag_GPWGAN.png" width="400"/>
+  <img src="https://github.com/dagrate/xtractree/blob/master/plots/gitdt.png" width="400"/>
+  <img src="https://github.com/dagrate/xtractree/blob/master/plots/gitrf.png" width="400"/>
 </p>
 
 XtracTree is a Python library that proposes to convert a bagging classifer into a set of ''if-then'' rules satisfying the requirements of model validation. XtracTree is also capable of (i) performing accurate predictions based on the extracted set of ''if-then'' rules and (ii) to highlight the decision path for each individual sample. XtracTree allows non machine learning expert to understand the decision of a machine learning bagging classifier.
