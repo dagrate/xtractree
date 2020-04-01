@@ -38,7 +38,7 @@ To replicate the experiments of our paper publication:
 If you use the repository, please cite:
 
 ```bibtex
-@inproceedings{charlier2020xtractree,
+@article{charlier2020xtractree,
   title={XtracTree for Regulator Validation of Bagging Methods Used in Retail Banking},
   author={Charlier, Jeremy and Makarenkov, Vladimir},
   journal={arXiv preprint},
