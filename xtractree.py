@@ -1,3 +1,8 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+"""xtractree.py
+"""
+
 import numpy as np
 import pandas as pd
 import seaborn as sns
@@ -8,6 +13,17 @@ from sklearn.datasets import load_breast_cancer, load_iris
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.model_selection import train_test_split
+from sklearn.model_selection import GridSearchCV
+from sklearn.metrics import (classification_report,
+                             confusion_matrix,
+                             roc_curve,
+                             auc)
+from sklearn.utils import Bunch
+import pickle as pkl
+
+# pandas options
+pd.set_option('display.max_rows', 10)
+pd.set_option('display.max_columns', 500)
 
 
 class XtracTree:
@@ -77,7 +93,7 @@ class XtracTree:
         # we store the content of the file to be written in l2w
         l2w = ["import numpy as np\n"]
         l2w.append("\n")
-        l2w.append("def rf_tree(x, num_tree):\n")
+        l2w.append("def estimator_tree(x, num_tree):\n")
         l2w.append("    if num_tree == %s:\n" % 0)
         l2w.append("        state = %s\n" % 0)
 
@@ -103,12 +119,12 @@ class XtracTree:
                         n_trees, self.x_train, l2w)
 
         # we write at the bottom the predict rule for the fixed model
-        l2w.append("\n\ndef rf_predict(x):\n")
+        l2w.append("\n\ndef estimator_predict(x):\n")
 
         # we initialize the proba values at 0
         l2w.append("    predict = 0.0\n")
         l2w.append("    for i in range(%s):\n" % n_trees)
-        l2w.append("        predict += rf_tree(x, i)\n")
+        l2w.append("        predict += estimator_tree(x, i)\n")
         l2w.append("    return predict\n")
 
         if self.out is not None:
@@ -133,7 +149,7 @@ class XtracTree:
         leave_id = estimator.apply(X_test)
 
         node_index = node_indicator.indices[node_indicator.indptr[sample_id]:
-                                                                        node_indicator.indptr[sample_id + 1]]
+                                        node_indicator.indptr[sample_id + 1]]
 
         for node_id in node_index:
             if leave_id[sample_id] == node_id:
@@ -145,7 +161,7 @@ class XtracTree:
                 threshold_sign = ">"
 
             print("decision node %s: %s (=%s) %s %s"
-                        % (node_id,
+#                         % (node_id,
                                 X_test.columns[feature[node_id]],
                                 X_test.iloc[sample_id, feature[node_id]],
                                 threshold_sign,
@@ -215,7 +231,7 @@ class XtracTree:
                                         'Value Sample %s ' % self.sample_id,
                                         'Threshold']
             )
-            
+
         if self.sample_ids is not None:
             print("\n\nRules to predict samples %s" % self.sample_ids)
             if 'RandomForestClassifier' in str(type(self.estimator)):
@@ -236,61 +252,77 @@ class XtracTree:
         if len(l2r): return l2r
 
 
-# __main__():
-breast_cancer = load_breast_cancer()
-df = pd.DataFrame(breast_cancer.data, columns=breast_cancer.feature_names)
-df['target'] = breast_cancer.target
+if __name__ == '__main__':
+    # we import the pkl file containing the data
+    loanForExp = pkl.load(open('loanForExp.pkl','rb'), encoding='latin1')
+    X_train, X_test, y_train, y_test = train_test_split(
+        loanForExp.data,
+        loanForExp.target,
+        test_size=0.3,
+        shuffle=True
+    )
 
-X_train, X_test, y_train, y_test = train_test_split(
-    df.drop(columns=['target']),
-    df['target'],
-    test_size=0.3,
-    random_state=42
-)
+    exp = 2
+    if exp == 1:
+        estimator = (
+            RandomForestClassifier(bootstrap=True, ccp_alpha=0.0, class_weight=None,
+                           criterion='gini', max_depth=2, max_features=2,
+                           max_leaf_nodes=None, max_samples=None,
+                           min_impurity_decrease=0.0, min_impurity_split=None,
+                           min_samples_leaf=1, min_samples_split=2,
+                           min_weight_fraction_leaf=0.0, n_estimators=3,
+                           n_jobs=None, oob_score=False, random_state=None,
+                           verbose=0, warm_start=False)
+        )
+    else:
+        estimator = (
+            DecisionTreeClassifier(ccp_alpha=0.0, class_weight=None,
+                          criterion='gini', max_depth=10, max_features=50,
+                          max_leaf_nodes=30, min_impurity_decrease=0.0,
+                          min_impurity_split=None, min_samples_leaf=1,
+                          min_samples_split=2, min_weight_fraction_leaf=0.0,
+                          presort='deprecated', random_state=0, splitter='best')
+        )
 
-# rf_trivial = RandomForestClassifier(
-#     n_estimators=5, criterion='gini',
-#     max_depth=10, min_samples_split=2,
-#     min_samples_leaf=1, min_weight_fraction_leaf=0.0,
-#     max_features=4, max_leaf_nodes=None,
-#     min_impurity_decrease=0.0, min_impurity_split=None,
-#     bootstrap=True, oob_score=False,
-#     n_jobs=None, random_state=None,
-#     verbose=0, warm_start=False,
-#     class_weight=None, ccp_alpha=0.0, max_samples=None
-# )
+    estimator.fit(X_train, y_train) # model fit
 
-rf_trivial = DecisionTreeClassifier(max_leaf_nodes=30, random_state=0)
+    # we convert the features importance of the classifier to a df
+    d = {'Features': X_train.columns,
+         'Feat Imp': estimator.feature_importances_
+    }
+    estimatorFeatimportance = pd.DataFrame(d).sort_values(
+        by='Feat Imp', ascending=False
+    )
 
-rf_trivial.fit(X_train, y_train)
+    p = XtracTree(estimator, X_train, X_test, out='estimator_decision_rules.py')
+    p.build_model()
 
-# we convert the features importance of the classifier to a df
-d = {'Features': X_train.columns,
-     'Feat Imp': rf_trivial.feature_importances_
-}
-rf_trivial_featimportance = pd.DataFrame(d).sort_values(
-    by='Feat Imp', ascending=False
-)
+    from estimator_decision_rules import estimator_predict
 
-# we build the model
-p = XtracTree(rf_trivial, X_train, X_test, out='rf_decision_rules.py')
-p.build_model()
+    sample_ids = [0,1,2,3,4,5]
+    res_from_parser = np.zeros((len(sample_ids)))
+    for n in range(len(sample_ids)):
+      sample_id = sample_ids[n]
+      sample_proba = estimator_predict(X_test.iloc[sample_id, :])
+      res_from_parser[n] = sample_proba
 
-# we compare the prediction of the py file with the model
-from rf_decision_rules import rf_predict
+    d = {"sample": sample_ids,
+         "Proba from XtracTree": res_from_parser,
+         "Proba from DT classifier": estimator.predict_proba(X_test)[:, 1][sample_ids]}
+    print(pd.DataFrame(d))
 
-sample_ids = [0,1,2,3,4,5]
-res_from_parser = np.zeros((len(sample_ids)))
-for n in range(len(sample_ids)):
-  sample_id = sample_ids[n]
-  sample_proba = rf_predict(X_test.iloc[sample_id, :])
-  res_from_parser[n] = sample_proba
+    sample_ids = np.arange(0, len(X_test[:15000]))
+    res_from_parser = np.zeros((len(sample_ids)))
+    for n in range(len(sample_ids)):
+      sample_id = sample_ids[n]
+      sample_proba = estimator_predict(X_test.iloc[sample_id, :])
+      res_from_parser[n] = sample_proba
 
-d = {"sample": sample_ids,
-     "Proba from parser": res_from_parser,
-     "Proba from classifier": rf_trivial.predict_proba(X_test)[:, 1][sample_ids]}
-pd.DataFrame(d)
+    d = {"sample": sample_ids,
+         "Proba from XtracTree": res_from_parser,
+         "Proba from DT classifier": estimator.predict_proba(X_test)[:, 1][sample_ids]}
+    print(pd.DataFrame(d).describe())
 
-# we extract and display rules
-p = XtracTree(rf_trivial, X_train, X_test, sample_id=0, sample_ids=[0,1,2])
-df_rules = p.sample_rules()
+    p = XtracTree(estimator, X_train, X_test, sample_id=6, sample_ids=[0,1,2])
+    df_rules = p.sample_rules()
+    print(df_rules)
