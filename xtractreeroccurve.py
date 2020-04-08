@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """
-xtractreeROCCurve.ipynb
+xtractreeROCCurve.py
 """
 
 import pickle as pkl
