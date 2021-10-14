@@ -69,7 +69,6 @@ class XtracTree:
 
         for i in range(n_nodes):
             if is_leaves[i]:
-                # irow = "%sif state == %s:\n%sprint(state)\n%sreturn %s\n" % ((
                 irow = "        if state == %s: return %s\n" % (
                     i, ((value[i][0,1] / weighted_n_node_samples[i]) / n_trees)
                     )
