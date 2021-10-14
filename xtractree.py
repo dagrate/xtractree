@@ -163,7 +163,7 @@ class XtracTree:
                 threshold_sign = ">"
 
             print("decision node %s: %s (=%s) %s %s"
-#                         % (node_id,
+                         % (node_id,
                                 X_test.columns[feature[node_id]],
                                 X_test.iloc[sample_id, feature[node_id]],
                                 threshold_sign,
