@@ -38,7 +38,7 @@ class XtracTree:
 
 
     def build_dtree_rules(estimator, n_trees, x_train, l2w):
-        """
+        """ Extract decision rules with splitting thresholds and probabilities.
         """
         # we can get useful information about the tree structure
         # using estimator.tree.__getstate__()['nodes']
@@ -86,8 +86,9 @@ class XtracTree:
 
 
     def build_model(self):
-        """
-        to complete the description
+        """Build the global architecture of the bagging algorithm.
+        It is designed such that it is an executable if self.out is 
+        saved as .py file. 
         """
         # we write the first line of the file
         # we store the content of the file to be written in l2w
@@ -138,6 +139,8 @@ class XtracTree:
 
 
     def display_rule_per_estimator(estimator, X_test, sample_id, l2r):
+        """Display the decision path per tree contained in the estimator for 1 sample.
+        """
         n_nodes = estimator.tree_.node_count
         children_left = estimator.tree_.children_left
         children_right = estimator.tree_.children_right
@@ -175,6 +178,8 @@ class XtracTree:
 
 
     def display_rule_per_estimator_sample_ids(estimator, X_test, sample_ids):
+        """Display the decision path per tree contained in the estimator for a group of samples.
+        """
         n_nodes = estimator.tree_.node_count
         children_left = estimator.tree_.children_left
         children_right = estimator.tree_.children_right
@@ -202,8 +207,7 @@ class XtracTree:
 
 
     def sample_rules(self):
-        """
-        Finish the description of the function.
+        """Display decision path on demand if sample_id or sample_ids is not None.
         """
         l2r = []
 
