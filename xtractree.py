@@ -6,9 +6,6 @@
 import numpy as np
 import pandas as pd
 from collections import OrderedDict
-import seaborn as sns
-import matplotlib.pyplot as plt
-from scipy import stats
 #
 from sklearn.datasets import load_breast_cancer, load_iris
 from sklearn.ensemble import RandomForestClassifier
