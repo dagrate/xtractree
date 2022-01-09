@@ -1,5 +1,2 @@
 # Ignore CSV file in data folder
 data/*.csv
-
-# Ignore authentification token for Kaggle
-.kaggle/*
