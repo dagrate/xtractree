@@ -14,13 +14,15 @@ The notebook xtractree_demo illustrates the usage of XtracTree and its output.
 
 ## Dependencies
 
-The library uses **Python 3** with the following modules:
-- numpy (Python 3) == '1.18.2'
-- pandas (Python 3) == '1.0.3'
-- seaborn (Python 3) == '0.10.0'
-- matplotlib (Python 3) == '3.2.1'
-- scipy (Python 3) == '1.4.1'
-- sklearn (Python 3) == '0.22.2.post1'
+The library uses **Python 3.6** with the following modules:
+- numpy (Python 3) >= '1.18.2'
+- pandas (Python 3) >= '1.0.3'
+
+To run the demos and the experiments of our publications, the following modules are also required:
+- seaborn (Python 3) >= '0.10.0'
+- matplotlib (Python 3) >= '3.2.1'
+- scipy (Python 3) >= '1.4.1'
+- sklearn (Python 3) >= '0.22.2.post1'
 
 ----------------------------
 
