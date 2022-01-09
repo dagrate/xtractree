@@ -2,26 +2,12 @@
 # -*- coding: utf-8 -*-
 """xtractree.py
 """
+__author__ = "Jeremy Charlier"
+__revised__ = "9 January 2022"
 #
 import numpy as np
 import pandas as pd
-from collections import OrderedDict
-#
-from sklearn.datasets import load_breast_cancer, load_iris
-from sklearn.ensemble import RandomForestClassifier
-from sklearn.tree import DecisionTreeClassifier
-from sklearn.model_selection import train_test_split
-from sklearn.model_selection import GridSearchCV
-from sklearn.metrics import (classification_report,
-                             confusion_matrix,
-                             roc_curve,
-                             auc)
-from sklearn.utils import Bunch
-import pickle as pkl
-#
-# pandas options
-pd.set_option('display.max_rows', 10)
-pd.set_option('display.max_columns', 500)
+from collections import Counter, OrderedDict
 #
 #
 class XtracTree:
@@ -33,11 +19,11 @@ class XtracTree:
     self.sample_id = sample_id
     self.sample_ids = sample_ids
     self.out = out
-  # end of function __init__
+  # END OF FUNCTION __init__
   #
   def __getstate__(self):
     return self.__dict__.copy()
-  # end of function __getstate__
+  # END OF FUNCTION __getstate__
   #
   def trees_to_dataframe(self):
     """Parse the fitted model and return in an easy-to-read pandas DataFrame.
@@ -115,7 +101,7 @@ class XtracTree:
             return set(tree.keys()) == {'leaf_value'}
         # END OF FUNCTION _is_single_node_tree
         #
-        # Create the node record, and populate universal data members
+        # CREATE NODE RECORD, POPULATE UNIVERSAL DATA MEMBERS
         node = OrderedDict()
         node['tree_index'] = tree_index
         node['node_depth'] = node_depth
@@ -133,7 +119,7 @@ class XtracTree:
         #node['weight'] = None
         node['count'] = None
         #
-        # Update values to reflect node type (leaf or split)
+        # UPDATE VALUES TO REFLECT NODE TYPE (LEAF OR SPLIT)
         if _is_split_node(tree):
             node['left_child'] = _get_node_index(tree['left_child'], tree_index)
             node['right_child'] = _get_node_index(tree['right_child'], tree_index)
@@ -166,7 +152,7 @@ class XtracTree:
       )
       res = [node]
       if _is_split_node(tree):
-        # traverse the next level of the tree
+        # TRAVERSE THE NEXT LEVEL OF THE TREE
         children = ['left_child', 'right_child']
         for child in children:
           subtree_list = tree_dict_to_node_list(
@@ -175,8 +161,8 @@ class XtracTree:
             tree_index=tree_index,
             feature_names=feature_names,
             parent_node=node['node_index'])
-          # In tree format, "subtree_list" is a list of node records (dicts),
-          # and we add node to the list.
+          # IN TREE FORMAT, "subtree_list" = LIST OF NODE RECORDS (DICTS)
+          # AND ADD NODE TO THE LIST
           res.extend(subtree_list)
       return res
     # END OF FUNCTION tree_dict_to_node_list
@@ -199,9 +185,9 @@ class XtracTree:
   def build_dtree_rules(estimator, n_trees, x_train, l2w):
     """Extract decision rules with splitting thresholds and probabilities.
     """
-    # we can get useful information about the tree structure
-    # using estimator.tree.__getstate__()['nodes']
-    # or import sklearn, help(sklearn.tree._tree.Tree)
+    # GET USEFULL INFO ABOUT TREE STRUCTURE
+    # WITH estimator.tree.__getstate__()['nodes']
+    # OR import sklearn, help(sklearn.tree._tree.Tree)
     n_nodes = estimator.tree_.node_count
     children_left = estimator.tree_.children_left
     children_right = estimator.tree_.children_right
@@ -212,21 +198,19 @@ class XtracTree:
     weighted_n_node_samples = estimator.tree_.weighted_n_node_samples
     node_depth = np.zeros(shape = n_nodes, dtype = np.int64)
     is_leaves = np.zeros(shape = n_nodes, dtype = bool)
-    stack = [(0, -1)] # seed is the root node id and its parent depth
-    # begin while loop
+    stack = [(0, -1)] # SEED IS ROOT NODE ID AND ITS PARENT DEPTH
     while len(stack) > 0:
       node_id, parent_depth = stack.pop()
       node_depth[node_id] = parent_depth + 1
-      # if we have a test node
+      # IF TEST NODE
       if (children_left[node_id] != children_right[node_id]):
         stack.append((children_left[node_id], parent_depth + 1))
         stack.append((children_right[node_id], parent_depth + 1))
       else:
         is_leaves[node_id] = True
-      # end if
-    # end while loop
+      # ENDIF
+    # ENDWHILE
     bgn="        if state == "
-    # begin for loop
     for i in range(n_nodes):
       if is_leaves[i]:
         irow = bgn+"%s: return %s\n" % (
@@ -240,19 +224,19 @@ class XtracTree:
           threshold[i],
           children_right[i]
         )
-      # end if
+      # ENDIF
       l2w.append(irow)
-    # end for loop
+    # ENDFOR
     return l2w
-  # end of function build_dtree_rules
+  # END OF FUNCTION build_dtree_rules
   #
   def build_model(self):
     """Build the global architecture of the bagging algorithm.
     It is designed such that it is an executable if self.out is 
     saved as .py file. 
     """
-    # we write the first line of the file
-    # we store the content of the file to be written in l2w
+    # WRITE THE FIRST LINE OF THE FILE
+    # STORE THE CONTENT OF THE FILE TO BE WRITTEN IN l2w
     l2w = ["import numpy as np\n"]
     l2w.append("\n")
     l2w.append("def estimator_tree(x, num_tree):\n")
@@ -300,7 +284,6 @@ class XtracTree:
       l2w.append("        state = %s\n" % 0)
       if 'RandomForestClassifier' in str(type(self.estimator)):
         n_trees = len(self.estimator.estimators_)
-        # begin for loop
         for n in range(n_trees):
           if n == 0:
             l2w = XtracTree.build_dtree_rules(
@@ -312,20 +295,20 @@ class XtracTree:
             l2w = XtracTree.build_dtree_rules(
               self.estimator.estimators_[n], 
               n_trees, self.x_train, l2w)
-          # end if
-        # end for loop
+          # ENDIF
+        # ENDFOR
       else:
-        # the estimator is a decision tree
-        # we can pass it directly to build_tree_rules
+        # estimator = DECISION TREE
+        # PASS IT DIRECTLY TO build_tree_rules
         n_trees = 1
         l2w = XtracTree.build_dtree_rules(
           self.estimator, 
           n_trees, self.x_train, l2w)
       # ENDIF
     # ENDIF
-    # we write at the bottom the predict rule for the fixed model
+    # WRITE AT THE BOTTOM THE PREDICT RULE FOR THE XTRACTREE MODEL
     l2w.append("\n\ndef estimator_predict(x):\n")
-    # we initialize the proba values at 0
+    # INITIALIZE PROBA VALUES AT 0
     l2w.append("    predict = 0.0\n")
     l2w.append("    for i in range(%s):\n" % n_trees)
     l2w.append("        predict += estimator_tree(x, i)\n")
@@ -337,14 +320,15 @@ class XtracTree:
       with open(self.out, 'w') as the_file:
         the_file.write("".join(l2w))
         the_file.close()
-      # end with
+      # ENDWITH
     else:
       print(l2w)
-    # end if
+    # ENDIF
     return None
-  # end of function build_model
+  # END OF FUNCTION build_model
   #
-  def display_rule_per_estimator(estimator, X_test, sample_id, l2r):
+  def display_rule_per_estimator(
+      estimator, X_test, sample_id, l2r, ndecisions):
     """Display the decision path per tree contained in the estimator
     for 1 sample.
     """
@@ -354,20 +338,21 @@ class XtracTree:
     feature = estimator.tree_.feature
     threshold = estimator.tree_.threshold
     node_indicator = estimator.decision_path(X_test)
-    # we have the leaves ids reached by each sample
+    # WE HAVE THE leaves ids REACHED BY EACH SAMPLE
     leave_id = estimator.apply(X_test)
     node_index = node_indicator.indices[
       node_indicator.indptr[sample_id]:node_indicator.indptr[sample_id + 1]]
-    # begin for loop
+    if ndecisions is None: ndecisions = len(node_index) # ENDIF
+    node_index = node_index[:ndecisions]
     for node_id in node_index:
       if leave_id[sample_id] == node_id:
         continue
-      # end if
+      # ENDIF
       if (X_test.iloc[sample_id, feature[node_id]] <= threshold[node_id]):
         threshold_sign = "<="
       else:
         threshold_sign = ">"
-      # end if
+      # ENDIF
       print("decision node %s: %s (=%s) %s %s"
         % (node_id,
           X_test.columns[feature[node_id]],
@@ -380,9 +365,9 @@ class XtracTree:
         X_test.iloc[sample_id, feature[node_id]],
         threshold[node_id]]
     )
-    # end for loop
+    # ENDFOR
     return l2r
-  # end of function display_rule_per_estimator
+  # END OF FUNCTION display_rule_per_estimator
   #
   def display_rule_per_estimator_sample_ids(estimator, X_test, sample_ids):
     """Display the decision path per tree contained in the estimator
@@ -394,7 +379,7 @@ class XtracTree:
     feature = estimator.tree_.feature
     threshold = estimator.tree_.threshold
     node_indicator = estimator.decision_path(X_test)
-    # we have the leaves ids reached by each sample.
+    # WE HAVE THE leaves ids REACHED BY EACH SAMPLE
     leave_id = estimator.apply(X_test)
     common_nodes = (
       node_indicator.toarray()[sample_ids].sum(axis=0) == len(sample_ids)
@@ -408,9 +393,9 @@ class XtracTree:
       X_test.iloc[sample_ids, feature[common_node_id]].values)
     )
     return None
-  # end of function display_rule_per_estimator_sample_ids
+  # END OF FUNCTION display_rule_per_estimator_sample_ids
   #
-  def sample_rules(self):
+  def sample_rules(self, ndecisions=None):
     """Display decision path on demand if sample_id or sample_ids
     is not None.
     """
@@ -423,23 +408,22 @@ class XtracTree:
       print("Rules to predict sample %s" % self.sample_id)
       if 'RandomForestClassifier' in str(type(self.estimator)):
         n_trees = len(self.estimator.estimators_)
-        # begin for loop
         for n in range(n_trees):
           print("\nRules for tree %s" % n)
           l2r = XtracTree.display_rule_per_estimator(
             self.estimator.estimators_[n],
-            self.x_test, self.sample_id, l2r
+            self.x_test, self.sample_id, l2r, ndecisions
           )
-        # end for loop
+        # ENDFOR
       else:
-        # the estimator is a decision tree
-        # we can pass it directly to display_rule_per_estimator
+        # estimator = DECISION TREE
+        # PASS IT DIRECTLY TO display_rule_per_estimator
         l2r = XtracTree.display_rule_per_estimator(
           self.estimator, self.x_test, 
-          self.sample_id, l2r
+          self.sample_id, l2r, ndecisions
         )
-      # end if
-      # we convert l2r as a dataframe
+      # ENDIF
+      # CONVERT l2r AS A DATAFRAME
       l2r = pd.DataFrame(
         l2r, 
         columns=[
@@ -447,102 +431,73 @@ class XtracTree:
           'Value Sample %s ' % self.sample_id, 
           'Threshold']
       )
-    # end if
+    # ENDIF
     if self.sample_ids is not None:
       print("\n\nRules to predict samples %s" % self.sample_ids)
       if 'RandomForestClassifier' in str(type(self.estimator)):
         n_trees = len(self.estimator.estimators_)
-        # begin for loop
         for n in range(n_trees):
           print("\nRules for tree %s" % n)
           XtracTree.display_rule_per_estimator_sample_ids(
             self.estimator.estimators_[n],
             self.x_test, self.sample_ids
           )
-        # end for loop
+        # ENDFOR
       else:
-        # the estimator is a decision tree
-        # we can pass it directly to display_rule_per_estimator
+        # estimator = DECISION TREE
+        # PASS IT DIRECTLY TO display_rule_per_estimator
         XtracTree.display_rule_per_estimator_sample_ids(
           self.estimator, self.x_test, self.sample_ids
         )
-      # end if
+      # ENDIF
     if len(l2r): return l2r
-  # end of function sample_rules
-# end of class XtracTree
-#
-#
-if __name__ == '__main__':
-    # we import the pkl file containing the data
-    loanForExp = pkl.load(open('loanForExp.pkl','rb'), encoding='latin1')
-    X_train, X_test, y_train, y_test = train_test_split(
-        loanForExp.data,
-        loanForExp.target,
-        test_size=0.3,
-        shuffle=True
-    )
-
-    exp = 2
-    if exp == 1:
-        estimator = (
-            RandomForestClassifier(bootstrap=True, ccp_alpha=0.0, class_weight=None,
-                           criterion='gini', max_depth=2, max_features=2,
-                           max_leaf_nodes=None, max_samples=None,
-                           min_impurity_decrease=0.0, min_impurity_split=None,
-                           min_samples_leaf=1, min_samples_split=2,
-                           min_weight_fraction_leaf=0.0, n_estimators=3,
-                           n_jobs=None, oob_score=False, random_state=None,
-                           verbose=0, warm_start=False)
-        )
-    else:
-        estimator = (
-            DecisionTreeClassifier(ccp_alpha=0.0, class_weight=None,
-                          criterion='gini', max_depth=10, max_features=50,
-                          max_leaf_nodes=30, min_impurity_decrease=0.0,
-                          min_impurity_split=None, min_samples_leaf=1,
-                          min_samples_split=2, min_weight_fraction_leaf=0.0,
-                          presort='deprecated', random_state=0, splitter='best')
-        )
-
-    estimator.fit(X_train, y_train) # model fit
-
-    # we convert the features importance of the classifier to a df
-    d = {'Features': X_train.columns,
-         'Feat Imp': estimator.feature_importances_
+  # END OF FUNCTION sample_rules
+  #
+  def _decisions_forest(df_rules, maxlines):
+    """Extract the most recurrent decision rules when estimator
+    has several trees.
+    """
+    colfeat = np.unique(df_rules['Features'])
+    d = Counter(df_rules['Features'])
+    vals = np.unique(list(d.values())) # COLLECT UNIQUE VALUES
+    scndval = np.sort(vals)[::-1] # SORT IN DESCENDING ORDER
+    # FOR LOOP COLLECT TOP KEY FEATURES
+    sfeat = []
+    for ival in scndval:
+      valmax = ival
+      for ikey in list(d.keys()):
+        cnd = (d[ikey]==valmax)
+        if cnd and (not ikey in sfeat): sfeat.append(ikey) # ENDIF
+      # ENDFOR
+    # ENDFOR
+    # COLLECT DECISION THRESHOLDS FOR FEATURES
+    valsamples, minthreshold = [], []
+    for ifeat in sfeat:
+      cnd = (df_rules['Features']==ifeat)
+      valsamples.append(df_rules[cnd].iloc[:,1].max())
+      minthreshold.append(df_rules[cnd].iloc[:,2].min())
+    # ENDFOR
+    # PROCESS RESULTS
+    nwdf = {
+      'Features': sfeat,
+      'Value Sample': valsamples,
+      'Threshold': minthreshold
     }
-    estimatorFeatimportance = pd.DataFrame(d).sort_values(
-        by='Feat Imp', ascending=False
-    )
-
-    p = XtracTree(estimator, X_train, X_test, out='estimator_decision_rules.py')
-    p.build_model()
-
-    from estimator_decision_rules import estimator_predict
-
-    sample_ids = [0,1,2,3,4,5]
-    res_from_parser = np.zeros((len(sample_ids)))
-    for n in range(len(sample_ids)):
-      sample_id = sample_ids[n]
-      sample_proba = estimator_predict(X_test.iloc[sample_id, :])
-      res_from_parser[n] = sample_proba
-
-    d = {"sample": sample_ids,
-         "Proba from XtracTree": res_from_parser,
-         "Proba from DT classifier": estimator.predict_proba(X_test)[:, 1][sample_ids]}
-    print(pd.DataFrame(d))
-
-    sample_ids = np.arange(0, len(X_test[:15000]))
-    res_from_parser = np.zeros((len(sample_ids)))
-    for n in range(len(sample_ids)):
-      sample_id = sample_ids[n]
-      sample_proba = estimator_predict(X_test.iloc[sample_id, :])
-      res_from_parser[n] = sample_proba
-
-    d = {"sample": sample_ids,
-         "Proba from XtracTree": res_from_parser,
-         "Proba from DT classifier": estimator.predict_proba(X_test)[:, 1][sample_ids]}
-    print(pd.DataFrame(d).describe())
-
-    p = XtracTree(estimator, X_train, X_test, sample_id=6, sample_ids=[0,1,2])
-    df_rules = p.sample_rules()
-    print(df_rules)
+    nwdf = pd.DataFrame(nwdf)
+    return nwdf[:np.min((maxlines, len(nwdf)))]
+  # END OF FUNCTION decisions_forest
+  #
+  def decisionsForForest(self, nDecisionsPerTree=5):
+    """Function pipeline to highlight top decisions of forest estimator."""
+    cnd = 'RandomForestClassifier' in str(type(self.estimator))
+    if not cnd:
+      msg="decisionsForForest only compatible for forest of trees.\n"
+      msg+="Current implementation only compatible with RandomForestClassifier."
+      print(msg); return None;
+    tmpdf = XtracTree.sample_rules(
+      self, ndecisions=nDecisionsPerTree) # TOP 5 DECISIONS PER TREE
+    resdf = XtracTree._decisions_forest(
+      tmpdf, nDecisionsPerTree) # AGGREGATE TOP DECISIONS
+    return resdf
+  # END OF FUNCTION decisionsForForest
+# END OF CLASS XtracTree
