@@ -1,2 +1,5 @@
 # Ignore CSV file in data folder
 data/*.csv
+
+# Ignore virtual environment
+*venv*
