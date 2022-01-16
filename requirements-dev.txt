@@ -1,0 +1,4 @@
+black==21.12b0
+flake8==4.0.1
+jupyter==1.0.0
+pytest==6.2.5
