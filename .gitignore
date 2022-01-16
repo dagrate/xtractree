@@ -3,3 +3,12 @@ data/*.csv
 
 # Ignore virtual environment
 *venv*
+
+# Ignore generated python file
+*_xtractree.py
+
+# Ignore vscode folder
+.vscode
+
+# Ignore python related folders
+*__pycache__*
