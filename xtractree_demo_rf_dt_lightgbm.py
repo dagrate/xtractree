@@ -31,7 +31,7 @@ def load_dataset():
 
 def get_estimator(experiment):
     if experiment == 1:
-        outfile = "dt_xtractree.py"
+        outfile = "output/dt_xtractree.py"
 
         df_params = {"max_depth": 10, "max_features": "auto", "random_state": 0}
 

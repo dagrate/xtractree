@@ -4,8 +4,8 @@ data/*.csv
 # Ignore virtual environment
 *venv*
 
-# Ignore generated python file
-*_xtractree.py
+# Ignore generated output python file
+output/*
 
 # Ignore vscode folder
 .vscode

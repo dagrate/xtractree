@@ -5,8 +5,10 @@
 __author__ = "Jeremy Charlier"
 __contributor__ = "Renan Waroux"
 __revised__ = "9 January 2022"
+import os
 import numpy as np
 import pandas as pd
+from pathlib import Path
 from collections import Counter, OrderedDict
 
 
@@ -309,6 +311,10 @@ class XtracTree:
 
         l2w.append("    return predict\n")
         if self.out is not None:
+            # Create parent directory if required
+            directory = os.path.dirname(self.out)
+            Path(directory).mkdir(parents=True, exist_ok=True)
+
             with open(self.out, "w") as the_file:
                 the_file.write("".join(l2w))
                 the_file.close()
