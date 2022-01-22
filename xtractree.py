@@ -6,6 +6,7 @@ __author__ = "Jeremy Charlier"
 __contributor__ = "Renan Waroux"
 __revised__ = "9 January 2022"
 import os
+import black
 import numpy as np
 import pandas as pd
 from pathlib import Path
@@ -235,8 +236,9 @@ class XtracTree:
         """
         # WRITE THE FIRST LINE OF THE FILE
         # STORE THE CONTENT OF THE FILE TO BE WRITTEN IN l2w
-        l2w = ["import numpy as np\n"]
-        l2w.append("\n")
+        l2w = []
+        # l2w = ["import numpy as np\n"]
+        # l2w.append("\n")
         l2w.append("def estimator_tree(x, num_tree):\n")
 
         if "LGBM" in str(self.estimator):
@@ -316,7 +318,9 @@ class XtracTree:
             Path(directory).mkdir(parents=True, exist_ok=True)
 
             with open(self.out, "w") as the_file:
-                the_file.write("".join(l2w))
+                # Format python file with black python formatter
+                l2w = black.format_str("".join(l2w), mode=black.FileMode())
+                the_file.write(l2w)
                 the_file.close()
         else:
             print(l2w)
